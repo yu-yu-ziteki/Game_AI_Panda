@@ -54,7 +54,7 @@ void Player::Update()
 	if (!(newPos.x < 1 || newPos.x >(STAGE_WIDTH - 2) * PLAYER_DRAW_SIZE
 		|| newPos.y < 1 || newPos.y >(STAGE_HEIGHT - 2) * PLAYER_DRAW_SIZE))
 	{
-		newPos = newPos;
+		pos_ = newPos;
 	}
 }
 
