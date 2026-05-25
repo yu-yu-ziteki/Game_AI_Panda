@@ -38,11 +38,7 @@ void Enemy::Update()
 	dir_timer = dir_timer - dt;
 	prog_timer = prog_timer - dt;
 	Point pPos = FindGameObject<Player>()->GetPlayerPos();
-	if (dir_timer < 0.0f)
-	{
-		dir_ =(DIR)(GetRand(3));
-		dir_timer = 3.0f + dir_timer;
-	}
+	
 
 	Point newPos = pos_;
 	if (prog_timer < 0.0f)
@@ -84,8 +80,13 @@ void Enemy::Update()
 	diffY = diffY * diffY;
 	int diff = (int)sqrt(diffX + diffY);
 
-	if (diff > viewArea)//パンダの視野より外にいたら下の処理をしないで抜ける
+	if (diff > viewArea)//パンダの視野より外にいたら
 	{
+		if (dir_timer < 0.0f)
+		{
+			dir_ = (DIR)(GetRand(3));
+			dir_timer = 3.0f + dir_timer;
+		}
 		return;
 	}
 
