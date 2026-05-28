@@ -29,22 +29,22 @@ Player::~Player()
 void Player::Update()
 {
 	Point newPos = pos_;
-	if (Input::IsKeyDown(KEY_INPUT_UP))
+	if (Input::IsKeyDown(KEY_INPUT_W))
 	{
 		dir_ = UP;
 		newPos.y -= PLAYER_DRAW_SIZE;
 	}
-	else if (Input::IsKeyDown(KEY_INPUT_DOWN))
+	else if (Input::IsKeyDown(KEY_INPUT_S))
 	{
 		dir_ = DOWN;
 		newPos.y += PLAYER_DRAW_SIZE;
 	}
-	else if (Input::IsKeyDown(KEY_INPUT_LEFT))
+	else if (Input::IsKeyDown(KEY_INPUT_A))
 	{
 		dir_ = LEFT;
 		newPos.x -= PLAYER_DRAW_SIZE;
 	}
-	else if (Input::IsKeyDown(KEY_INPUT_RIGHT))
+	else if (Input::IsKeyDown(KEY_INPUT_D))
 	{
 		dir_ = RIGHT;
 		newPos.x += PLAYER_DRAW_SIZE;

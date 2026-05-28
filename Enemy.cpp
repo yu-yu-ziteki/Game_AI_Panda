@@ -22,6 +22,11 @@ Enemy::Enemy()
 	hImage_ = LoadGraph("Assets/panda_R.png");
 	pos_ = ENEMY_START_POS; //32はブロックの位置pos_
 	dir_ = INIT_ENEMY_DIR;
+	flont_ = { 0.0f, 0.0f };
+	isFound = false;
+	float playerVecX = 0;
+	float playerVecY = 0;
+	float dot        = 0;
 }
 
 Enemy::~Enemy()
@@ -47,15 +52,19 @@ void Enemy::Update()
 		{
 		case UP:
 			newPos.y -= ENEMY_DRAW_SIZE;
+			flont_ = {0.0f, -1.0f}; //上向きの単位ベクトル
 			break;
 		case DOWN:
 			newPos.y += ENEMY_DRAW_SIZE;
+			flont_ = { 0.0f, 1.0f }; //下向きの単位ベクトル
 			break;
 		case LEFT:
 			newPos.x -= ENEMY_DRAW_SIZE;
+			flont_ = { -1.0f, 0.0f }; //左向きの単位ベクトル
 			break;
 		case RIGHT:
 			newPos.x += ENEMY_DRAW_SIZE;
+			flont_ = { 1.0f, 0.0f }; //右向きの単位ベクトル
 			break;
 		default:
 			break;
@@ -73,23 +82,38 @@ void Enemy::Update()
 	}
 	
 
-	int diffX = pPos.x - pos_.x;
-	int diffY = pPos.y - pos_.y;
+	int distX = pPos.x - pos_.x; //プレイヤーと敵のXの距離を求める
+	int distY = pPos.y - pos_.y; //プレイヤーと敵のYの距離を求める
 
-	diffX = diffX * diffX;
-	diffY = diffY * diffY;
-	int diff = (int)sqrt(diffX + diffY);
+	int diff = (int)sqrt((distX * distX) + (distY * distY)); //プレイヤーと敵の距離を求める
 
-	if (diff > viewArea)//パンダの視野より外にいたら
+	if (diff == 0) diff = 1;
+
+	playerVecX = (float)(distX / diff); //プレイヤーへの単位ベクトルX
+	 playerVecY = (float)(distY / diff); //プレイヤーへの単位ベクトルY
+
+	dot = (flont_.x * playerVecX) + (flont_.y * playerVecY); //フロントベクトルとプレイヤーへのベクトルの内積
+
+	if (dot >= 0.7 && diff <= viewArea)
 	{
+		isFound = true;
+	}
+	else
+	{
+		isFound = false;
+	}
+	if (isFound  == false)//パンダの視野より外にいたら
+	{
+		isFound = false;
 		if (dir_timer < 0.0f){
 			dir_ = (DIR)(GetRand(3));
 			dir_timer = 3.0f + dir_timer;
+
 		}
 		return;
 	}
 
-		if (diffX >= diffY)//Xの距離の方が大きかったら左右に動く
+	if (isFound) //プレイヤーが視野の範囲に入っていたら
 		{
 			if (pPos.x <= pos_.x)
 			{
@@ -135,8 +159,10 @@ void Enemy::Draw()
 		animTimer = ANIM_INTERVAL + animTimer;
 	}
 	animTimer = animTimer - Time::DeltaTime();
-	DrawFormatString(0, 12, 0x000000, "x = %d y = %d %c", pPos.x / ENEMY_SIZE, pPos.y / ENEMY_SIZE);
-	DrawFormatString(0, 0, 0x000000, "x = %d y = %d %c", pos_.x / ENEMY_SIZE, pos_.y / ENEMY_SIZE);
-	DrawCircle(pos_.x + ENEMY_SIZE / 2, pos_.y + ENEMY_SIZE / 2, viewArea, GetColor(255,0,0), FALSE);
+	DrawFormatString(0, 12, 0x000000, "x = %d y = %d", pPos.x / ENEMY_SIZE, pPos.y / ENEMY_SIZE);
+	DrawFormatString(0, 0, 0x000000, "x = %d y = %d", pos_.x / ENEMY_SIZE, pos_.y / ENEMY_SIZE);
+	DrawFormatString(0, 24, 0x000000, "dot = %f", dot);
+	DrawFormatString(0, 36, 0x000000, "playerVecX = %f playerVecY = %f", playerVecX, playerVecY);
+	if(isFound) DrawCircle(pos_.x + ENEMY_SIZE / 2, pos_.y + ENEMY_SIZE / 2, viewArea, GetColor(255,0,0), FALSE);
 
 }
