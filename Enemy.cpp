@@ -82,8 +82,7 @@ void Enemy::Update()
 
 	if (diff > viewArea)//ƒpƒ“ƒ_‚ÌŽ‹–ì‚æ‚èŠO‚É‚¢‚½‚ç
 	{
-		if (dir_timer < 0.0f)
-		{
+		if (dir_timer < 0.0f){
 			dir_ = (DIR)(GetRand(3));
 			dir_timer = 3.0f + dir_timer;
 		}
@@ -112,7 +111,6 @@ void Enemy::Update()
 				dir_ = DOWN;
 			}
 		}
-	
 }
 
 void Enemy::Draw()
