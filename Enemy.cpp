@@ -12,7 +12,7 @@ namespace
 	const int ENEMY_DRAW_SIZE = 32; //敵の描画サイズ
 	const int animFrame[4]{ 0, 1, 2, 1 };
 	const float ANIM_INTERVAL = 0.2f;
-	const int viewArea = CHA_SIZE * 7;
+	const int viewArea = CHA_SIZE * 7; //視野の最大
 }
 
 
@@ -24,9 +24,10 @@ Enemy::Enemy()
 	dir_ = INIT_ENEMY_DIR;
 	flont_ = { 0.0f, 0.0f };
 	isFound = false;
-	float playerVecX = 0;
-	float playerVecY = 0;
-	float dot        = 0;
+	playerVecX = 0;
+	playerVecY = 0;
+	dot        = 0;
+	State = Patrol;
 }
 
 Enemy::~Enemy()
@@ -35,108 +36,91 @@ Enemy::~Enemy()
 
 void Enemy::Update()
 {
-	//GetRand(数値)
-	//3秒に1回向きをランダムに変える
-	static float dir_timer = 3.0f;
-	static float prog_timer = 0.5f;
 	float dt = Time::DeltaTime();
-	dir_timer = dir_timer - dt;
-	prog_timer = prog_timer - dt;
 	Point pPos = FindGameObject<Player>()->GetPlayerPos();
-	
 
-	Point newPos = pos_;
-	if (prog_timer < 0.0f)
+	switch (dir_)
 	{
-		switch (dir_)
-		{
-		case UP:
-			newPos.y -= ENEMY_DRAW_SIZE;
-			flont_ = {0.0f, -1.0f}; //上向きの単位ベクトル
-			break;
-		case DOWN:
-			newPos.y += ENEMY_DRAW_SIZE;
-			flont_ = { 0.0f, 1.0f }; //下向きの単位ベクトル
-			break;
-		case LEFT:
-			newPos.x -= ENEMY_DRAW_SIZE;
-			flont_ = { -1.0f, 0.0f }; //左向きの単位ベクトル
-			break;
-		case RIGHT:
-			newPos.x += ENEMY_DRAW_SIZE;
-			flont_ = { 1.0f, 0.0f }; //右向きの単位ベクトル
-			break;
-		default:
-			break;
-		}
-
-		int mapValue = FindGameObject<Stage>()->GetMap(newPos.x / CHA_SIZE, newPos.y / CHA_SIZE);
-		//移動先がステージの外に出ないようにする
-
-		if (!(newPos.x < 1 || newPos.x >(STAGE_WIDTH - 2) * ENEMY_DRAW_SIZE
-			|| newPos.y < 1 || newPos.y >(STAGE_HEIGHT - 2) * ENEMY_DRAW_SIZE))
-		{
-			pos_ = newPos;
-		}
-		prog_timer = 0.5f + prog_timer;
+	case UP:    flont_ = { 0.0f, -1.0f }; break;
+	case DOWN:  flont_ = { 0.0f,  1.0f }; break;
+	case LEFT:  flont_ = { -1.0f,  0.0f }; break;
+	case RIGHT: flont_ = { 1.0f,  0.0f }; break;
 	}
+
 	
-
-	int distX = pPos.x - pos_.x; //プレイヤーと敵のXの距離を求める
-	int distY = pPos.y - pos_.y; //プレイヤーと敵のYの距離を求める
-
-	int diff = (int)sqrt((distX * distX) + (distY * distY)); //プレイヤーと敵の距離を求める
+	int distX = pPos.x - pos_.x;
+	int distY = pPos.y - pos_.y;
+	int diff = (int)sqrt((distX * distX) + (distY * distY)); // 距離
 
 	if (diff == 0) diff = 1;
 
-	playerVecX = (float)(distX / diff); //プレイヤーへの単位ベクトルX
-	 playerVecY = (float)(distY / diff); //プレイヤーへの単位ベクトルY
+	playerVecX = (float)distX / diff;
+	playerVecY = (float)distY / diff;
+	dot = (flont_.x * playerVecX) + (flont_.y * playerVecY);
 
-	dot = (flont_.x * playerVecX) + (flont_.y * playerVecY); //フロントベクトルとプレイヤーへのベクトルの内積
 
 	if (dot >= 0.7 && diff <= viewArea)
 	{
 		isFound = true;
 	}
-	else
-	{
+
+	if (diff >= viewArea) {
 		isFound = false;
 	}
-	if (isFound  == false)//パンダの視野より外にいたら
+	
+	static float dir_timer = 3.0f;
+	static float prog_timer = 0.5f;
+	dir_timer -= dt;
+	prog_timer -= dt;
+
+	if (prog_timer < 0.0f)
 	{
-		isFound = false;
-		if (dir_timer < 0.0f){
-			dir_ = (DIR)(GetRand(3));
-			dir_timer = 3.0f + dir_timer;
-
-		}
-		return;
-	}
-
-	if (isFound) //プレイヤーが視野の範囲に入っていたら
+		if (isFound)
 		{
-			if (pPos.x <= pos_.x)
+			if (abs(distX) >= abs(distY))
 			{
-				dir_ = LEFT;
+				if (pPos.x <= pos_.x) dir_ = LEFT;
+				else                  dir_ = RIGHT;
 			}
 			else
 			{
-				dir_ = RIGHT;
+				if (pPos.y <= pos_.y) dir_ = UP;
+				else                  dir_ = DOWN;
 			}
 		}
-		else                //Yの距離の方が大きかったら上下に動く
+		else
 		{
-			if (pPos.y <= pos_.y)
+			if (dir_timer < 0.0f)
 			{
-				dir_ = UP;
-			}
-			else
-			{
-				dir_ = DOWN;
+				dir_ = (DIR)(GetRand(3));
+				dir_timer = 3.0f;
 			}
 		}
+
+
+
+		Point nextPos = pos_;
+		switch (dir_)
+		{
+		case UP:    nextPos.y -= ENEMY_DRAW_SIZE; break;
+		case DOWN:  nextPos.y += ENEMY_DRAW_SIZE; break;
+		case LEFT:  nextPos.x -= ENEMY_DRAW_SIZE; break;
+		case RIGHT: nextPos.x += ENEMY_DRAW_SIZE; break;
+		}
+
+		
+		int mapValue = FindGameObject<Stage>()->GetMap(nextPos.x / CHA_SIZE, nextPos.y / CHA_SIZE);
+		bool isOut = (nextPos.x < 1 || nextPos.x >(STAGE_WIDTH - 2) * ENEMY_DRAW_SIZE ||
+			nextPos.y < 1 || nextPos.y >(STAGE_HEIGHT - 2) * ENEMY_DRAW_SIZE);
+
+		if (mapValue != 1 && !isOut)
+		{
+			pos_ = nextPos;
+		}
+
+		prog_timer = 0.5f + prog_timer; // タイマーリセット
+	}
 }
-
 void Enemy::Draw()
 {
 	Point pPos = FindGameObject<Player>()->GetPlayerPos();

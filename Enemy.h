@@ -26,5 +26,16 @@ private:
 	float playerVecY;
 	float dot;
 	bool isFound;
+	bool isFindPlayer;
+	bool isAttackRange;
+	bool isSearchTimeOver;
+	enum EnemyState
+	{
+		Patrol,
+		Chase,
+		Attack,
+		Search
+	};
+	EnemyState State;
 };
 
