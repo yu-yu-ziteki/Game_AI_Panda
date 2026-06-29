@@ -23,10 +23,12 @@ Enemy::Enemy()
 	pos_ = ENEMY_START_POS; //32はブロックの位置pos_
 	dir_ = INIT_ENEMY_DIR;
 	flont_ = { 0.0f, 0.0f };
-	isFound = false;
+	isFoundPlayer = false;
 	playerVecX = 0;
 	playerVecY = 0;
 	dot        = 0;
+	dir_timer = 3.0f;
+	prog_timer = 0.5f;
 	State = Patrol;
 }
 
@@ -47,10 +49,19 @@ void Enemy::Update()
 	case RIGHT: flont_ = { 1.0f,  0.0f }; break;
 	}
 
+	switch (State) {
+	case Patrol:
+		UpdatePatrol();
+		break;
+
+	case Chase:
+		UpdateChase();
+		break;
+	}
 	
-	int distX = pPos.x - pos_.x;
-	int distY = pPos.y - pos_.y;
-	int diff = (int)sqrt((distX * distX) + (distY * distY)); // 距離
+	 distX = pPos.x - pos_.x;
+	distY = pPos.y - pos_.y;
+	diff = (int)sqrt((distX * distX) + (distY * distY)); // 距離
 
 	if (diff == 0) diff = 1;
 
@@ -58,68 +69,10 @@ void Enemy::Update()
 	playerVecY = (float)distY / diff;
 	dot = (flont_.x * playerVecX) + (flont_.y * playerVecY);
 
-
-	if (dot >= 0.7 && diff <= viewArea)
-	{
-		isFound = true;
-	}
-
-	if (diff >= viewArea) {
-		isFound = false;
-	}
-	
-	static float dir_timer = 3.0f;
-	static float prog_timer = 0.5f;
 	dir_timer -= dt;
 	prog_timer -= dt;
 
-	if (prog_timer < 0.0f)
-	{
-		if (isFound)
-		{
-			if (abs(distX) >= abs(distY))
-			{
-				if (pPos.x <= pos_.x) dir_ = LEFT;
-				else                  dir_ = RIGHT;
-			}
-			else
-			{
-				if (pPos.y <= pos_.y) dir_ = UP;
-				else                  dir_ = DOWN;
-			}
-		}
-		else
-		{
-			if (dir_timer < 0.0f)
-			{
-				dir_ = (DIR)(GetRand(3));
-				dir_timer = 3.0f;
-			}
-		}
-
-
-
-		Point nextPos = pos_;
-		switch (dir_)
-		{
-		case UP:    nextPos.y -= ENEMY_DRAW_SIZE; break;
-		case DOWN:  nextPos.y += ENEMY_DRAW_SIZE; break;
-		case LEFT:  nextPos.x -= ENEMY_DRAW_SIZE; break;
-		case RIGHT: nextPos.x += ENEMY_DRAW_SIZE; break;
-		}
-
-		
-		int mapValue = FindGameObject<Stage>()->GetMap(nextPos.x / CHA_SIZE, nextPos.y / CHA_SIZE);
-		bool isOut = (nextPos.x < 1 || nextPos.x >(STAGE_WIDTH - 2) * ENEMY_DRAW_SIZE ||
-			nextPos.y < 1 || nextPos.y >(STAGE_HEIGHT - 2) * ENEMY_DRAW_SIZE);
-
-		if (mapValue != 1 && !isOut)
-		{
-			pos_ = nextPos;
-		}
-
-		prog_timer = 0.5f + prog_timer; // タイマーリセット
-	}
+	
 }
 void Enemy::Draw()
 {
@@ -142,11 +95,72 @@ void Enemy::Draw()
 		frame = (++frame) % 4;
 		animTimer = ANIM_INTERVAL + animTimer;
 	}
+	
 	animTimer = animTimer - Time::DeltaTime();
 	DrawFormatString(0, 12, 0x000000, "x = %d y = %d", pPos.x / ENEMY_SIZE, pPos.y / ENEMY_SIZE);
 	DrawFormatString(0, 0, 0x000000, "x = %d y = %d", pos_.x / ENEMY_SIZE, pos_.y / ENEMY_SIZE);
 	DrawFormatString(0, 24, 0x000000, "dot = %f", dot);
 	DrawFormatString(0, 36, 0x000000, "playerVecX = %f playerVecY = %f", playerVecX, playerVecY);
-	if(isFound) DrawCircle(pos_.x + ENEMY_SIZE / 2, pos_.y + ENEMY_SIZE / 2, viewArea, GetColor(255,0,0), FALSE);
+	if(isFoundPlayer) DrawCircle(pos_.x + ENEMY_SIZE / 2, pos_.y + ENEMY_SIZE / 2, viewArea, GetColor(255,0,0), FALSE);
 
 }
+
+void Enemy::UpdatePatrol()
+{
+	if (dir_timer < 0.0f)
+	{
+		dir_ = (DIR)(GetRand(3));
+		dir_timer = 3.0f;
+	}
+	if (dot >= 0.7 && diff <= viewArea)
+	{
+		State = Chase;
+	}
+
+}
+
+void Enemy::UpdateChase()
+{
+	Point pPos = FindGameObject<Player>()->GetPlayerPos();
+	if(diff >= viewArea){
+		State = Chase;
+	}
+	if (prog_timer < 0.0f)//追いかける処理
+	{
+		
+		
+			if (abs(distX) >= abs(distY))
+			{
+				if (pPos.x <= pos_.x) dir_ = LEFT;
+				else                  dir_ = RIGHT;
+			}
+			else
+			{
+				if (pPos.y <= pos_.y) dir_ = UP;
+				else                  dir_ = DOWN;
+			}
+		
+
+
+		Point nextPos = pos_;
+		switch (dir_)
+		{
+		case UP:    nextPos.y -= ENEMY_DRAW_SIZE; break;
+		case DOWN:  nextPos.y += ENEMY_DRAW_SIZE; break;
+		case LEFT:  nextPos.x -= ENEMY_DRAW_SIZE; break;
+		case RIGHT: nextPos.x += ENEMY_DRAW_SIZE; break;
+		}
+
+		int mapValue = FindGameObject<Stage>()->GetMap(nextPos.x / CHA_SIZE, nextPos.y / CHA_SIZE);
+		bool isOut = (nextPos.x < 1 || nextPos.x >(STAGE_WIDTH - 2) * ENEMY_DRAW_SIZE ||
+			nextPos.y < 1 || nextPos.y >(STAGE_HEIGHT - 2) * ENEMY_DRAW_SIZE);
+
+		if (mapValue != 1 && !isOut)
+		{
+			pos_ = nextPos;
+		}
+
+		prog_timer = 0.5f + prog_timer; // タイマーリセット
+	}
+}
+
