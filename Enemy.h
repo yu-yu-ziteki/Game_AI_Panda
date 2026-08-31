@@ -38,17 +38,17 @@ private:
 	bool isAttackRange;
 	bool isSearchTimeOver;
 
-	void UpdatePatrol();//“K“–‚ÉˆÚ“®
-	void UpdateChase();//’Ç‚¢‚©‚¯‚é
-	/*void UpdateAttack();
-	void UpdateSearch();*/
+	void UpdatePatrol();//->Chase
+	void UpdateChase();//->Attack
+	void UpdateAttack();//->Search
+	void UpdateSearch();//Patrol
 
 	enum EnemyState
 	{
 		Patrol,
 		Chase,
-	/*	Attack,
-		Search*/
+		Attack,
+		Search
 	};
 	EnemyState State;
 };

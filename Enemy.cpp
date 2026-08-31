@@ -49,7 +49,9 @@ void Enemy::Update()
 	case RIGHT: flont_ = { 1.0f,  0.0f }; break;
 	}
 
-	switch (State) {
+	//木
+	switch (State)
+	{
 	case Patrol:
 		UpdatePatrol();
 		break;
@@ -107,23 +109,55 @@ void Enemy::Draw()
 
 void Enemy::UpdatePatrol()
 {
+
 	if (dir_timer < 0.0f)
 	{
 		dir_ = (DIR)(GetRand(3));
 		dir_timer = 3.0f;
 	}
+
+	
+	if (prog_timer < 0.0f)
+	{
+		Point nextPos = pos_;
+		switch (dir_)
+		{
+		case UP:    nextPos.y -= ENEMY_DRAW_SIZE; break;
+		case DOWN:  nextPos.y += ENEMY_DRAW_SIZE; break;
+		case LEFT:  nextPos.x -= ENEMY_DRAW_SIZE; break;
+		case RIGHT: nextPos.x += ENEMY_DRAW_SIZE; break;
+		}
+
+		int mapValue = FindGameObject<Stage>()->GetMap(nextPos.x / CHA_SIZE, nextPos.y / CHA_SIZE);
+		bool isOut = (nextPos.x < 1 || nextPos.x >(STAGE_WIDTH - 2) * ENEMY_DRAW_SIZE ||
+			nextPos.y < 1 || nextPos.y >(STAGE_HEIGHT - 2) * ENEMY_DRAW_SIZE);
+
+		if (mapValue != 1 && !isOut)
+		{
+			pos_ = nextPos;
+		}
+		else
+		{
+			
+			dir_ = (DIR)(GetRand(3));
+		}
+
+		prog_timer = 0.5f; 
+	}
+
+	
 	if (dot >= 0.7 && diff <= viewArea)
 	{
 		State = Chase;
 	}
-
 }
 
 void Enemy::UpdateChase()
 {
+
 	Point pPos = FindGameObject<Player>()->GetPlayerPos();
 	if(diff >= viewArea){
-		State = Chase;
+		State = Patrol;
 	}
 	if (prog_timer < 0.0f)//追いかける処理
 	{
@@ -160,7 +194,15 @@ void Enemy::UpdateChase()
 			pos_ = nextPos;
 		}
 
-		prog_timer = 0.5f + prog_timer; // タイマーリセット
+		prog_timer = 0.5f ; // タイマーリセット
 	}
+}
+
+void Enemy::UpdateAttack()
+{
+}
+
+void Enemy::UpdateSearch()
+{
 }
 
