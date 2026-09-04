@@ -23,6 +23,9 @@ public:
 	void Draw() override;
 
 private:
+	float search_timer; // 捜索用タイマー（2秒用）
+	float look_timer;   // 四方向を切り替えるためのタイマー
+
 	float playerVecX;
 	float playerVecY;
 	float dot;
@@ -43,6 +46,7 @@ private:
 	void UpdateAttack();//->Search
 	void UpdateSearch();//Patrol
 
+public:
 	enum EnemyState
 	{
 		Patrol,
@@ -51,5 +55,7 @@ private:
 		Search
 	};
 	EnemyState State;
-};
 
+	EnemyState GetState() const { return State; }
+
+};

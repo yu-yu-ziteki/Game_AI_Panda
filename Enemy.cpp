@@ -1,4 +1,4 @@
-#include "Enemy.h"
+ï»¿#include "Enemy.h"
 #include "time.h"
 #include "Stage.h"
 #include "Player.h"
@@ -6,13 +6,13 @@
 
 namespace
 {
-	const int ENEMY_SIZE = 48; //“G‚ÌƒTƒCƒY 32*32
-	const Point ENEMY_START_POS = { 20 * ENEMY_SIZE, 10 * ENEMY_SIZE }; //“G‚Ì‰ŠúˆÊ’u
+	const int ENEMY_SIZE = 48; //æ•µã®ã‚µã‚¤ã‚º 32*32
+	const Point ENEMY_START_POS = { 20 * ENEMY_SIZE, 10 * ENEMY_SIZE }; //æ•µã®åˆæœŸä½ç½®
 	const DIR INIT_ENEMY_DIR = { LEFT };
-	const int ENEMY_DRAW_SIZE = 32; //“G‚Ì•`‰æƒTƒCƒY
+	const int ENEMY_DRAW_SIZE = 32; //æ•µã®æç”»ã‚µã‚¤ã‚º
 	const int animFrame[4]{ 0, 1, 2, 1 };
 	const float ANIM_INTERVAL = 0.2f;
-	const int viewArea = CHA_SIZE * 7; //‹–ì‚ÌÅ‘å
+	const int viewArea = CHA_SIZE * 7; //è¦–é‡ã®æœ€å¤§
 }
 
 
@@ -20,7 +20,7 @@ Enemy::Enemy()
 	: GameObject() 
 {
 	hImage_ = LoadGraph("Assets/panda_R.png");
-	pos_ = ENEMY_START_POS; //32‚ÍƒuƒƒbƒN‚ÌˆÊ’upos_
+	pos_ = ENEMY_START_POS; //32ã¯ãƒ–ãƒ­ãƒƒã‚¯ã®ä½ç½®pos_
 	dir_ = INIT_ENEMY_DIR;
 	flont_ = { 0.0f, 0.0f };
 	isFoundPlayer = false;
@@ -49,21 +49,23 @@ void Enemy::Update()
 	case RIGHT: flont_ = { 1.0f,  0.0f }; break;
 	}
 
-	//–Ø
+	//æœ¨
 	switch (State)
 	{
 	case Patrol:
 		UpdatePatrol();
 		break;
-
 	case Chase:
 		UpdateChase();
+		break;
+	case Search:
+		UpdateSearch();
 		break;
 	}
 	
 	 distX = pPos.x - pos_.x;
 	distY = pPos.y - pos_.y;
-	diff = (int)sqrt((distX * distX) + (distY * distY)); // ‹——£
+	diff = (int)sqrt((distX * distX) + (distY * distY)); // è·é›¢
 
 	if (diff == 0) diff = 1;
 
@@ -157,9 +159,12 @@ void Enemy::UpdateChase()
 
 	Point pPos = FindGameObject<Player>()->GetPlayerPos();
 	if(diff >= viewArea){
-		State = Patrol;
+		State = Search;
+		search_timer = 2.0f; // ã‚µãƒ¼ãƒæ™‚é–“ã‚’2ç§’ã«
+		look_timer = 0.5f;   // 0.5ç§’ã”ã¨ã«æ–¹å‘ã‚’å¤‰ãˆã‚‹
+		return;
 	}
-	if (prog_timer < 0.0f)//’Ç‚¢‚©‚¯‚éˆ—
+	if (prog_timer < 0.0f)//è¿½ã„ã‹ã‘ã‚‹å‡¦ç†
 	{
 		
 		
@@ -194,7 +199,7 @@ void Enemy::UpdateChase()
 			pos_ = nextPos;
 		}
 
-		prog_timer = 0.5f ; // ƒ^ƒCƒ}[ƒŠƒZƒbƒg
+		prog_timer = 0.5f ; // ã‚¿ã‚¤ãƒãƒ¼ãƒªã‚»ãƒƒãƒˆ
 	}
 }
 
@@ -204,5 +209,23 @@ void Enemy::UpdateAttack()
 
 void Enemy::UpdateSearch()
 {
+	float dt = Time::DeltaTime();
+	search_timer -= dt;
+	look_timer -= dt;
+
+	if (look_timer < 0.0f)
+	{
+		dir_ = (DIR)((dir_ + 1) % 4);
+		look_timer = 0.5f;
+	}
+	if (dot >= 0.7 && diff <= viewArea)
+	{
+		State = Chase;
+		return;
+	}
+	if (search_timer < 0.0f)
+	{
+		State = Patrol;
+	}
 }
 
